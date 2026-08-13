@@ -1,4 +1,4 @@
-module github.com/tylermclean/mfl-mcp
+module github.com/tyler180/mfl-mcp
 
 go 1.25.0
 

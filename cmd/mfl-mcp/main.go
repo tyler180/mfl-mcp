@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/tylermclean/mfl-mcp/internal/config"
-	"github.com/tylermclean/mfl-mcp/internal/mfl"
-	servertools "github.com/tylermclean/mfl-mcp/internal/tools"
+	"github.com/tyler180/mfl-mcp/internal/config"
+	"github.com/tyler180/mfl-mcp/internal/mfl"
+	servertools "github.com/tyler180/mfl-mcp/internal/tools"
 )
 
 var version = "dev"

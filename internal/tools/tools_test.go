@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/tylermclean/mfl-mcp/internal/mfl"
+	"github.com/tyler180/mfl-mcp/internal/mfl"
 )
 
 func TestRegisterExposesReadOnlyTools(t *testing.T) {
