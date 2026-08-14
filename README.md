@@ -14,11 +14,17 @@ Draft-model data tools:
 
 - `get_rules` and `get_all_rules`
 - `get_free_agents`
+- `get_rookie_adp`
 - `get_assets` and `get_future_draft_picks`
 - `get_draft_results` and `get_live_draft_results`
 - `get_player_scores` and `get_projected_scores`
 - `get_player_profiles`
 - `get_salary_adjustments`
+
+`get_rookie_adp` reads MFL's aggregate ADP from completed real rookie-only
+drafts. It defaults to recent 12-team drafts across scoring formats and a 5%
+minimum selection rate, which keeps MFL's documented lower-bound behavior
+predictable while covering roughly six rookie rounds during draft season.
 
 MFL import and other mutating operations are intentionally not exposed.
 
