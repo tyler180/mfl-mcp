@@ -61,6 +61,10 @@ func (h *Handler) Register(server *mcp.Server) {
 		Description: "Get the currently unrostered player IDs in a league, optionally filtered by position.",
 	}, h.getFreeAgents)
 	mcp.AddTool(server, &mcp.Tool{
+		Name: "get_rookie_adp", Title: "Get MFL rookie-only ADP", Annotations: annotation,
+		Description: "Get read-only ADP from completed real MFL rookie-only drafts, filtered by league size, scoring, recency, and minimum draft selection percentage.",
+	}, h.getRookieADP)
+	mcp.AddTool(server, &mcp.Tool{
 		Name: "get_assets", Title: "Get MFL franchise assets", Annotations: annotation,
 		Description: "Get every franchise's tradable players, current-year draft picks, and future draft picks.",
 	}, h.getAssets)
@@ -129,6 +133,14 @@ type FreeAgentsInput struct {
 	LeagueID string `json:"league_id,omitempty" jsonschema:"MFL league ID; defaults to MFL_LEAGUE_ID"`
 	Year     int    `json:"year,omitempty" jsonschema:"MFL season; defaults to MFL_YEAR"`
 	Position string `json:"position,omitempty" jsonschema:"Optional MFL position abbreviation"`
+}
+
+type RookieADPInput struct {
+	Year           int    `json:"year,omitempty" jsonschema:"MFL season; defaults to MFL_YEAR"`
+	Period         string `json:"period,omitempty" jsonschema:"Draft recency period; defaults to RECENT"`
+	FranchiseCount int    `json:"franchise_count,omitempty" jsonschema:"League size: 8, 10, 12, 14, or 16; defaults to 12"`
+	Scoring        string `json:"scoring,omitempty" jsonschema:"Scoring filter: ALL, PPR, or NON_PPR; defaults to ALL"`
+	Cutoff         int    `json:"cutoff,omitempty" jsonschema:"Minimum draft selection percentage; defaults to 5 and must be at least 5"`
 }
 
 type PlayerScoresInput struct {
@@ -266,6 +278,57 @@ func (h *Handler) getFreeAgents(ctx context.Context, _ *mcp.CallToolRequest, inp
 		params.Set("POSITION", position)
 	}
 	return h.export(ctx, year, leagueID, "freeAgents", params)
+}
+
+func (h *Handler) getRookieADP(ctx context.Context, _ *mcp.CallToolRequest, input RookieADPInput) (*mcp.CallToolResult, any, error) {
+	year := input.Year
+	if year == 0 {
+		year = h.defaults.Year
+	}
+	period := strings.ToUpper(strings.TrimSpace(input.Period))
+	if period == "" {
+		period = "RECENT"
+	}
+	validPeriods := map[string]bool{
+		"ALL": true, "RECENT": true, "DRAFT": true, "JUNE": true, "JULY": true,
+		"AUG1": true, "AUG15": true, "START": true, "MID": true, "PLAYOFF": true,
+	}
+	if !validPeriods[period] {
+		return nil, nil, errors.New("rookie ADP period must be ALL, RECENT, DRAFT, JUNE, JULY, AUG1, AUG15, START, MID, or PLAYOFF")
+	}
+	franchiseCount := input.FranchiseCount
+	if franchiseCount == 0 {
+		franchiseCount = 12
+	}
+	if franchiseCount != 8 && franchiseCount != 10 && franchiseCount != 12 && franchiseCount != 14 && franchiseCount != 16 {
+		return nil, nil, errors.New("rookie ADP franchise_count must be 8, 10, 12, 14, or 16")
+	}
+	scoring := strings.ToUpper(strings.TrimSpace(input.Scoring))
+	if scoring == "" {
+		scoring = "ALL"
+	}
+	var ppr string
+	switch scoring {
+	case "ALL":
+		ppr = "-1"
+	case "PPR":
+		ppr = "1"
+	case "NON_PPR":
+		ppr = "0"
+	default:
+		return nil, nil, errors.New("rookie ADP scoring must be ALL, PPR, or NON_PPR")
+	}
+	cutoff := input.Cutoff
+	if cutoff == 0 {
+		cutoff = 5
+	}
+	if cutoff < 5 || cutoff > 100 {
+		return nil, nil, errors.New("rookie ADP cutoff must be between 5 and 100")
+	}
+	return h.export(ctx, year, "", "adp", url.Values{
+		"PERIOD": {period}, "FCOUNT": {strconv.Itoa(franchiseCount)}, "IS_PPR": {ppr},
+		"IS_KEEPER": {"R"}, "IS_MOCK": {"0"}, "CUTOFF": {strconv.Itoa(cutoff)},
+	})
 }
 
 func (h *Handler) getAssets(ctx context.Context, _ *mcp.CallToolRequest, input LeagueInput) (*mcp.CallToolResult, any, error) {

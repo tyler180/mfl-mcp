@@ -44,7 +44,7 @@ func TestRegisterExposesReadOnlyTools(t *testing.T) {
 	want := map[string]bool{
 		"get_league": false, "get_rosters": false, "get_standings": false,
 		"get_transactions": false, "get_players": false, "get_rules": false,
-		"get_all_rules": false, "get_free_agents": false, "get_assets": false,
+		"get_all_rules": false, "get_free_agents": false, "get_rookie_adp": false, "get_assets": false,
 		"get_future_draft_picks": false, "get_draft_results": false, "get_live_draft_results": false,
 		"get_player_scores": false, "get_projected_scores": false,
 		"get_player_profiles": false, "get_salary_adjustments": false,
@@ -85,6 +85,14 @@ func TestDraftModelToolsBuildDocumentedMFLRequests(t *testing.T) {
 		{name: "rules", tool: "get_rules", arguments: map[string]any{}, year: "2026", export: "rules", leagueID: "12345"},
 		{name: "all rules", tool: "get_all_rules", arguments: map[string]any{"year": 2025}, year: "2025", export: "allRules"},
 		{name: "free agents", tool: "get_free_agents", arguments: map[string]any{"position": "wr"}, year: "2026", export: "freeAgents", leagueID: "12345", query: url.Values{"POSITION": {"WR"}}},
+		{
+			name: "rookie ADP", tool: "get_rookie_adp",
+			arguments: map[string]any{"period": "recent", "franchise_count": 12, "scoring": "all", "cutoff": 5},
+			year:      "2026", export: "adp", query: url.Values{
+				"PERIOD": {"RECENT"}, "FCOUNT": {"12"}, "IS_PPR": {"-1"},
+				"IS_KEEPER": {"R"}, "IS_MOCK": {"0"}, "CUTOFF": {"5"},
+			},
+		},
 		{name: "assets", tool: "get_assets", arguments: map[string]any{}, year: "2026", export: "assets", leagueID: "12345"},
 		{name: "future picks", tool: "get_future_draft_picks", arguments: map[string]any{}, year: "2026", export: "futureDraftPicks", leagueID: "12345"},
 		{name: "draft results", tool: "get_draft_results", arguments: map[string]any{}, year: "2026", export: "draftResults", leagueID: "12345"},
